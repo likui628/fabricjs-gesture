@@ -35,10 +35,8 @@ onMounted(() => {
 
       canvas.zoomToPoint(viewportPoint, newZoom)
     } else {
-      const vpt = this.viewportTransform
-      vpt[4] -= e.deltaX
-      vpt[5] -= e.deltaY
-      this.requestRenderAll()
+      const delta = new fabric.Point(-e.deltaX, -e.deltaY)
+      canvas.relativePan(delta)
     }
   })
 
