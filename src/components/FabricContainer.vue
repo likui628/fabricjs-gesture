@@ -1,5 +1,5 @@
 <template>
-  <div @dragover.prevent @drop="handleDrop">
+  <div @dragover.prevent @drop="handleDrop" @touchmove.prevent>
     <canvas ref="canvasRef" style="border: solid 1px #eee"></canvas>
   </div>
 </template>
@@ -46,6 +46,29 @@ const handleDrop = (e: DragEvent) => {
   });
 };
 
+const handleTouchEnd = (e: TouchEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const dragData = sessionStorage.getItem("dragData");
+  if (!dragData) return;
+
+  try {
+    const touch = e.changedTouches[0];
+    const dropEvent = new DragEvent("drop", {
+      dataTransfer: new DataTransfer(),
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+    });
+    dropEvent.dataTransfer?.setData("text/plain", dragData);
+    handleDrop(dropEvent);
+  } catch (error) {
+    console.error("Error handling touch drop:", error);
+  } finally {
+    sessionStorage.removeItem("dragData");
+  }
+};
+
 onMounted(() => {
   canvas = new fabric.Canvas(canvasRef.value!, {
     width: 500,
@@ -53,6 +76,8 @@ onMounted(() => {
     fireRightClick: true,
     stopContextMenu: true,
   });
+
+  document.addEventListener("touchend", handleTouchEnd);
 
   const canvasElement = document.querySelector(".upper-canvas") as HTMLCanvasElement;
   if (!canvasElement) {
@@ -154,7 +179,6 @@ onMounted(() => {
     }
   });
 
-  // Mouse wheel handling for desktop
   canvas.on("mouse:wheel", function (this: fabric.Canvas, evt) {
     const { viewportPoint, e } = evt;
 
