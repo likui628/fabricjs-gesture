@@ -14,8 +14,6 @@ const minZoom = 0.1;
 const maxZoom = 5;
 const zoomIntensity = 0.1;
 
-const info = ref('');
-
 onMounted(() => {
   const canvas = new fabric.Canvas(canvasRef.value!, {
     width: 500,
@@ -49,7 +47,6 @@ onMounted(() => {
   }
 
   canvasElement.addEventListener('touchstart', (e: TouchEvent) => {
-    info.value = `touch start: JSON.stringify(${JSON.stringify(e)})`;
     if (e.touches.length === 2) {
       // Disable selection and object interactions during panning/zooming
       wasSelectionEnabled = canvas.selection || false;
@@ -69,7 +66,6 @@ onMounted(() => {
   });
 
   canvasElement.addEventListener('touchmove', (e: TouchEvent) => {
-    info.value = `touch move: JSON.stringify(${JSON.stringify(e)})`;
     if (isPanning && e.touches.length === 2) {
       const currentTouchPoint = getTouchCenter(e.touches);
 
@@ -86,17 +82,13 @@ onMounted(() => {
       if (lastPinchDistance !== null) {
         const currentDistance = getTouchDistance(e.touches);
         const pinchRatio = currentDistance / lastPinchDistance;
-        info.value += `pinch ratio: ${pinchRatio}`;
         if (Math.abs(pinchRatio - 1) > 0.01) {
           const zoom = canvas.getZoom();
           const newZoom = zoom * pinchRatio;
 
           if (newZoom >= minZoom && newZoom <= maxZoom) {
             const point = new fabric.Point(currentTouchPoint.x, currentTouchPoint.y);
-            const viewportPoint = fabric.util.transformPoint(
-              point,
-              fabric.util.invertTransform(canvas.viewportTransform)
-            );
+            const viewportPoint = point.transform(fabric.util.invertTransform(canvas.viewportTransform))
             canvas.zoomToPoint(viewportPoint, newZoom);
           }
         }
@@ -112,7 +104,6 @@ onMounted(() => {
   });
 
   canvasElement.addEventListener('touchend', (e: TouchEvent) => {
-    info.value = `touch end: JSON.stringify(${JSON.stringify(e)})`;
     if (e.touches.length < 2) {
       if (isPanning) {
         // Re-enable selection and object interactions
@@ -132,7 +123,6 @@ onMounted(() => {
   // Mouse wheel handling for desktop
   canvas.on('mouse:wheel', function (this: fabric.Canvas, evt) {
     const { viewportPoint, e } = evt;
-    info.value = `mouse wheel: JSON.stringify(${JSON.stringify(evt)})`;
 
     e.preventDefault();
     e.stopPropagation();
