@@ -1,6 +1,7 @@
 <template>
   <div @dragover.prevent @drop="handleDrop" @touchmove.prevent>
     <canvas ref="canvasRef" style="border: solid 1px #eee"></canvas>
+    <slot></slot>
   </div>
 </template>
 <script lang="ts" setup>
@@ -48,13 +49,27 @@ const handleDrop = (e: DragEvent) => {
 
 const handleTouchEnd = (e: TouchEvent) => {
   e.preventDefault();
-  e.stopPropagation();
-
   const dragData = sessionStorage.getItem("dragData");
   if (!dragData) return;
 
+
   try {
     const touch = e.changedTouches[0];
+    
+    // Check if touch point is within canvas viewport
+    const point = new fabric.Point(touch.clientX, touch.clientY);
+    const viewportPoint = point.transform(fabric.util.invertTransform(canvas.viewportTransform));
+    
+    // Check if the point is within canvas boundaries
+    if (
+      viewportPoint.x < 0 ||
+      viewportPoint.x > canvas.width ||
+      viewportPoint.y < 0 ||
+      viewportPoint.y > canvas.height
+    ) {
+      return; // Touch point is outside canvas viewport, do nothing
+    }
+
     const dropEvent = new DragEvent("drop", {
       dataTransfer: new DataTransfer(),
       clientX: touch.clientX,
